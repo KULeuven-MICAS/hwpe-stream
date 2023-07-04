@@ -2,7 +2,12 @@
 
 # HWPE Stream 
 
-## Installation Requirements
+## Installation Requirements\
+* Python 3.10
+* cocotb
+
+Install this by using the following command:
+
 ``` bash
 pip install -r requirements.txt
 ```
