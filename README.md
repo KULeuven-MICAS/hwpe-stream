@@ -1,18 +1,45 @@
-[![Documentation Status](https://readthedocs.org/projects/hwpe-doc/badge/?version=latest)](https://hwpe-doc.readthedocs.io/en/latest/?badge=latest)
-
 # HWPE Stream 
 
-## Installation Requirements\
+## Installation Requirements for Verification
+
+### A. Installing Verilator
+
+Simply run the `verilator.sh` script within the `$HWPE_STREAM_PATH/scripts/` directory. Read through the script to identify modifiable paths.
+
+**Note:** A stable cocotb setup works specifically for Verilator version v4.106. 
+
+A dore detailed installation can be found in [Verilator website](https://verilator.org/guide/latest/install.html). Just make sure 
+
+### B. Installing Conda Environment
+
+We need to make sure that we have:
+
 * Python 3.10
 * cocotb
 
-Install this by using the following command:
+1. First make sure to install conda by following [these instructions](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html).
+
+2. Create new conda environment. In your terminal, invoke:
+
+```
+conda create --name hwpe-stream python=3.10
+```
+
+3. Go into the hwpe-stream environment:
+
+``` bash
+conda activate hwpe-stream
+```
+
+4. Install the list of required modules. Invoke the command below. A list of required python modules are listed in `requirements.txt` file. 
 
 ``` bash
 pip install -r requirements.txt
 ```
 
-## Citation
+---
+
+## Main References and Citation
 
 If you are using these IPs for an academic publication, please cite the following paper:
 ```
