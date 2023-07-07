@@ -2,21 +2,8 @@
 
 ## Installation Requirements for Verification
 
-### A. Verilator
-
-Please refer to the [Verilator website](https://verilator.org/guide/latest/install.html) for the installationd details. **Please make sure to install version v4.106**
-
-The `verilator.sh` script within the `$HWPE_STREAM_PATH/scripts/` directory is made available for guidance.
-
-
-### B. Python 
-
-Please make sure to have the following Python version and packages installed:
-
-* Python 3.10
-* cocotb
-
-A list of required python modules are listed in `requirements.txt` file. You can invoke:
+* **Please make sure to install version v5.006** and refer to the [Verilator website](https://verilator.org/guide/latest/install.html) for the installationd details. 
+* Please make sure to have Python 3.10 and the required packages listed in `requirements.txt`. You can invoke:
 
 ``` bash
 pip install -r requirements.txt
