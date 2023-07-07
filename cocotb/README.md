@@ -7,6 +7,20 @@
 3. The `src_sanity_check` directory is only for testing purposes in CI.
 4. By default, all files run using `verilator`. You can change the simulator in each test.
 
+
+To run tests simply use:
+``` bash
+make test test_name=path_name
+```
+For example:
+``` bash
+make test-log test_name=src_sanity_check/test_sanity_check.py
+```
+To run multiple tests:
+``` bash
+make run-all
+```
+
 ## Test Descriptions
 
 * `test_sanity_check.py` - tests the simple counter in `src_sanity_check` directory. Use this to check and see if cocotb runs properly.

@@ -32,8 +32,11 @@ help:
 
 clean-all:
 	rm -rf sim_build
+	rm -rf ./*/sim_build
 	rm -rf __pycache__
+	rm -rf ./*/__pycache__
 	rm -rf .pytest_cache
+	rm -rf ./*/.pytest_cache
 	rm -rf modelsim.ini
 	rm -rf transcript
 	rm -rf results.xml

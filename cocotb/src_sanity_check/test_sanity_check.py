@@ -61,5 +61,5 @@ def test_sanity_check():
         toplevel        =toplevel,   
         module          =module,
         simulator       =simulator,     
-        sim_build       ="./sim_build/{}/".format(toplevel)
+        sim_build       ="./src_sanity_check/sim_build/{}/".format(toplevel)
     )        
