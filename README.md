@@ -2,7 +2,7 @@
 
 ## Installation Requirements for Verification
 
-* **Please make sure to install version v5.006** and refer to the [Verilator website](https://verilator.org/guide/latest/install.html) for the installationd details. 
+* **Please make sure to install Verilator version v5.006** and refer to the [Verilator website](https://verilator.org/guide/latest/install.html) for the installation details. 
 * Please make sure to have Python 3.10 and the required packages listed in `requirements.txt`. You can invoke:
 
 ``` bash
