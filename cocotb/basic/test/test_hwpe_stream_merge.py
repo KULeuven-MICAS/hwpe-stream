@@ -12,6 +12,7 @@ import os
 import yaml
 import random
 import math
+import sys
 
 #-----------------------------------
 # Importing cocotb 
@@ -56,6 +57,11 @@ CHECK_COUNT   = 5
 # DUT parameters
 NB_IN_STREAMS = 4
 DATA_WIDTH    = 16
+
+# For random seed logging
+RANDOM_SEED = random.randrange(sys.maxsize)
+random.seed(RANDOM_SEED)
+
 
 #-----------------------------------
 # Get YAML source
@@ -157,19 +163,25 @@ async def hwpe_stream_merge(dut):
     #-----------------------------------
 
     cocotb.log.info(f'------------------------------------ START OF TESTING ------------------------------------')
+    cocotb.log.info(f'Running parameters:')
+    cocotb.log.info(f'NB_IN_STREAMS:{NB_IN_STREAMS}')
+    cocotb.log.info(f'DATA_WIDTH   :{DATA_WIDTH}')
+    cocotb.log.info(f'RANDOM_SEED  :{RANDOM_SEED}')
+    cocotb.log.info(f'------------------------------------------------------------------------------------------')
 
     for i in range(CHECK_COUNT):
+
+        #-----------------------------------
+        # Inputting stimuli
+        #-----------------------------------
+
+        cocotb.log.info(f'------------------------------------ ITERATION # {i} ------------------------------------')
 
         # Initialize empty arrays
         push_data  = [0]*NB_IN_STREAMS
         push_valid = [0]*NB_IN_STREAMS
         push_strb  = [0]*NB_IN_STREAMS
         push_ready = [0]*NB_IN_STREAMS
-
-        cocotb.log.info(f'------------------------------------ ITERATION # {i} ------------------------------------')
-
-        # Stimuli setting for NB_IN_STREAMS inputs
-        cocotb.log.info(f'===== INPUT LOG =====')
 
         for j in range(NB_IN_STREAMS-1,-1,-1):
 
@@ -183,23 +195,16 @@ async def hwpe_stream_merge(dut):
             dut.valid_i[j].value  = push_valid[j]
             dut. strb_i[j].value  = push_strb [j]
 
-            # Record log
-            cocotb.log.info(f'----- INPUT STREAM # {j} -----')
-            cocotb.log.info(f'push_i[{j}].data.value  = {hex(push_data[j])}')
-            cocotb.log.info(f'push_i[{j}].valid.value = {   push_valid[j] }')
-            cocotb.log.info(f'push_i[{j}].strb.value  = {bin(push_strb[j])}')
-            
         # Not part of streams since this is a single value only
         pop_ready  = random.randint(0,1)
         dut.ready_o.value  = pop_ready
-        cocotb.log.info(f'----- OUTPUT READY -----')
-        cocotb.log.info(f'pop_o.ready.value     = {pop_ready}')
-        
+
         # Next time step for simulation to evaluate data
         await Timer(1, units="ns")
-        
-        # Extract outputs
-        cocotb.log.info(f'===== OUTPUT LOG =====')
+
+        #-----------------------------------
+        # Extracting outputs
+        #-----------------------------------
 
         pop_valid = dut.valid_o.value
         pop_data  = int(dut.data_o.value)
@@ -208,6 +213,27 @@ async def hwpe_stream_merge(dut):
         for j in range(NB_IN_STREAMS):
             push_ready[j] = dut.ready_i[j].value
             cocotb.log.info(f'push_i[{j}].ready.value = {push_ready[j]}')
+
+        #-----------------------------------
+        # Logging data
+        #-----------------------------------
+        for j in range(NB_IN_STREAMS-1,-1,-1):
+
+            # Stimuli setting for NB_IN_STREAMS inputs
+            cocotb.log.info(f'===== INPUT LOG =====')
+
+            # Record log
+            cocotb.log.info(f'----- INPUT STREAM # {j} -----')
+            cocotb.log.info(f'push_i[{j}].data.value  = {hex(push_data[j])}')
+            cocotb.log.info(f'push_i[{j}].valid.value = {   push_valid[j] }')
+            cocotb.log.info(f'push_i[{j}].strb.value  = {bin(push_strb[j])}')
+            
+        
+        cocotb.log.info(f'----- OUTPUT READY -----')
+        cocotb.log.info(f'pop_o.ready.value     = {pop_ready}')
+        
+        # Extract outputs
+        cocotb.log.info(f'===== OUTPUT LOG =====')
 
         cocotb.log.info(f'pop_o.valid.value     = {pop_valid}')
         cocotb.log.info(f'pop_o.data.value      = {hex(pop_data)}')
@@ -220,7 +246,7 @@ async def hwpe_stream_merge(dut):
         # Checking for output mismatch
         # Expected output should be a simple concatenation of inputs
         # Note that MSB is higher number in array
-        data_check   = 0
+        data_check  = 0
         strb_check  = 0
         valid_check = 0
         ready_flag  = 1
