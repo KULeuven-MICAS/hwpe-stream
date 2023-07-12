@@ -1,18 +1,17 @@
-[![Documentation Status](https://readthedocs.org/projects/hwpe-doc/badge/?version=latest)](https://hwpe-doc.readthedocs.io/en/latest/?badge=latest)
-
 # HWPE Stream 
 
-## Installation Requirements\
-* Python 3.10
-* cocotb
+## Installation Requirements for Verification
 
-Install this by using the following command:
+* **Please make sure to install Verilator version v5.006** and refer to the [Verilator website](https://verilator.org/guide/latest/install.html) for the installation details. 
+* Please make sure to have Python 3.10 and the required packages listed in `requirements.txt`. You can invoke:
 
 ``` bash
 pip install -r requirements.txt
 ```
 
-## Citation
+---
+
+## Main References and Citation
 
 If you are using these IPs for an academic publication, please cite the following paper:
 ```
