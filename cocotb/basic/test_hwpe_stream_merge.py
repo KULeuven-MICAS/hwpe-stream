@@ -1,3 +1,10 @@
+#---------------------------------
+# Copyright 2023 KULeuven
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+# Author: Ryan Antonio (ryan.antonio@esat.kuleuven.be)
+#---------------------------------
+
 #-----------------------------------
 # Importing useful tools 
 #-----------------------------------
@@ -57,13 +64,14 @@ rtl_sources     = yaml_dict['hwpe-stream']['files']
 for i in range(len(rtl_sources)):
     rtl_sources[i] = hwpe_stream_path + '/' + rtl_sources[i]
 
+for i in range(len(include_folders)):
+    include_folders[i] = hwpe_stream_path + '/' + include_folders[i]
+
 #-----------------------------------
 # Add testbench to RTL list
 #-----------------------------------
-rtl_sources.append('/users/micas/rantonio/no_backup/hwpe-stream-fork/cocotb/basic/tb_hwpe_stream_merge.sv')
-
-for i in range(len(include_folders)):
-    include_folders[i] = hwpe_stream_path + '/' + include_folders[i]
+tb_path = hwpe_stream_path + '/cocotb/basic/tb_hwpe_stream_merge.sv'
+rtl_sources.append(tb_path)
 
 #-----------------------------------
 # Verification functions
@@ -99,16 +107,16 @@ async def hwpe_stream_merge(dut):
     # logic clk_i
     # logic rst_ni
     # logic clear_i
-    # hwpe_stream_intf_stream.sink   push_i [NB_IN_STREAMS-1:0],
-    # >> input  valid
-    # >> input  data  [DATA_WIDTH-1:0]
-    # >> input  strb  [STRB_WIDTH-1:0]
-    # >> output ready
+    # hwpe_stream_intf_stream.sink push_i [NB_IN_STREAMS-1:0],
+    # >> input  valid_i
+    # >> input   data_i [DATA_WIDTH-1:0]
+    # >> input   strb_i [STRB_WIDTH-1:0]
+    # >> output ready_i
     # hwpe_stream_intf_stream.source pop_o
-    # >> output valid
-    # >> output data  [DATA_WIDTH-1:0]
-    # >> output strb  [STRB_WIDTH-1:0]
-    # >> input  ready
+    # >> output valid_o
+    # >> output  data_o [DATA_WIDTH-1:0]
+    # >> output  strb_o [STRB_WIDTH-1:0]
+    # >> input  ready_o
     #-----------------------------------
 
     # Initialize clock
@@ -121,12 +129,12 @@ async def hwpe_stream_merge(dut):
 
     # Initialize push_i input values
     for i in range(NB_IN_STREAMS):
-        dut.push_i[i].valid.value = 0
-        dut.push_i[i].data.value  = 0
-        dut.push_i[i].strb.value  = 0
+        dut.valid_i[i].value = 0
+        dut.data_i[i].value  = 0
+        dut.strb_i[i].value  = 0
     
     # Initialize pop_o values
-    dut.pop_o.ready.value = 0
+    dut.ready_o.value = 0
 
     # Wait 2 cycles to reset
     await RisingEdge(dut.clk_i)
@@ -151,10 +159,10 @@ async def hwpe_stream_merge(dut):
 
             pop_ready  = random.randint(0,1)
 
-            dut.push_i[j].data.value  = push_data
-            dut.push_i[j].valid.value = push_valid
-            dut.push_i[j].strb.value  = push_strb
-            dut.pop_o.ready.value     = pop_ready
+            dut. data_i[j].value  = push_data
+            dut.valid_i[j].value  = push_valid
+            dut. strb_i[j].value  = push_strb
+            dut.   ready_o.value  = pop_ready
 
             cocotb.log.info(f'------------------------------------ INPUT LOG ------------------------------------')
             cocotb.log.info(f'push_i[{j}].data.value  = {hex(push_data)}')
@@ -164,17 +172,22 @@ async def hwpe_stream_merge(dut):
         
         await Timer(1, units="ns")
         
-        pop_valid = dut.pop_o.valid.value
-        pop_data  = hex(dut.pop_o.data.value)
+        pop_valid =     dut.valid_o.value
+        pop_data  = hex(dut.data_o.value)
 
         cocotb.log.info(f'------------------------------------ OUTPUT LOG ------------------------------------')
 
         for j in range(NB_IN_STREAMS):
-            push_ready = dut.push_i[j].ready.value
+            push_ready = dut.ready_i.value
             cocotb.log.info(f'push_i[{j}].ready.value = {push_ready}')
 
-        cocotb.log.info(f'pop_o.valid.value      = {pop_valid}')
-        cocotb.log.info(f'pop_o.data.value       = { pop_data}')
+        cocotb.log.info(f'pop_o.valid.value     = {pop_valid}')
+        cocotb.log.info(f'pop_o.data.value      = { pop_data}')
+
+        #-----------------------------------
+        # Assertion checks
+        #-----------------------------------
+        
         
 
 
