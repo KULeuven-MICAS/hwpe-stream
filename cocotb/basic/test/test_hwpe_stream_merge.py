@@ -42,7 +42,7 @@ module       = "test_hwpe_stream_merge"
 # Specify what simulator to use (e.g., verilator, modelsim, icarus)
 simulator    = "verilator"
 # Specify build directory
-sim_build    = basic_path + "/sim_build/{}/".format(toplevel)
+sim_build    = basic_path + "/test/sim_build/{}/".format(toplevel)
 # Get YAML source files path
 src_yml_path = hwpe_stream_path + "/src_files.yml"
 
@@ -82,7 +82,7 @@ for i in range(len(include_folders)):
 #-----------------------------------
 # Add testbench to RTL list
 #-----------------------------------
-tb_path = hwpe_stream_path + '/cocotb/basic/tb_hwpe_stream_merge.sv'
+tb_path = hwpe_stream_path + '/cocotb/basic/tb/tb_hwpe_stream_merge.sv'
 rtl_sources.append(tb_path)
 
 #-----------------------------------
