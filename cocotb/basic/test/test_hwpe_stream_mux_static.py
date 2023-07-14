@@ -158,7 +158,7 @@ async def hwpe_stream_mux_static(dut):
 
     dut.pop_ready_o.value = 0
 
-    dut.sel_i.valie = 0
+    dut.sel_i.value = 0
 
     # Wait 2 cycles to reset
     await RisingEdge(dut.clk_i)
