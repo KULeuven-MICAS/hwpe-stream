@@ -31,15 +31,15 @@ import  pytest
 # Extracting and setting important variables and paths
 #-----------------------------------
 hwpe_stream_path = os.getenv("HWPE_STREAM_HOME")
-basic_path       = hwpe_stream_path + "/cocotb/basic"
+basic_path       = hwpe_stream_path + "/tests/cocotb/basic"
 
 #-----------------------------------
 # Top-level definitions 
 #-----------------------------------
 # Specify top-level module
-toplevel     = 'tb_hwpe_stream_split'
+toplevel     = 'wrapper_hwpe_stream_merge'
 # Specify python test name that contains the @cocotb.test. Usually the name of this test.
-module       = "test_hwpe_stream_split"
+module       = "test_hwpe_stream_merge"
 # Specify what simulator to use (e.g., verilator, modelsim, icarus)
 simulator    = "verilator"
 # Specify build directory
@@ -55,12 +55,13 @@ src_yml_path = hwpe_stream_path + "/src_files.yml"
 CHECK_COUNT   = 5
 
 # DUT parameters
-NB_OUT_STREAMS = 2
-DATA_WIDTH_IN  = 32
+NB_IN_STREAMS = 4
+DATA_WIDTH    = 16
 
 # For random seed logging
 RANDOM_SEED = random.randrange(sys.maxsize)
 random.seed(RANDOM_SEED)
+
 
 #-----------------------------------
 # Get YAML source
@@ -87,7 +88,7 @@ for i in range(len(include_folders)):
 #-----------------------------------
 # Add testbench to RTL list
 #-----------------------------------
-tb_path = hwpe_stream_path + '/cocotb/basic/tb/tb_hwpe_stream_split.sv'
+tb_path = basic_path + '/wrappers/wrapper_hwpe_stream_merge.sv'
 rtl_sources.append(tb_path)
 
 #-----------------------------------
@@ -101,38 +102,35 @@ rtl_sources.append(tb_path)
 # are consistent with the DUT. Double check the main module.
 #-----------------------------------
 @cocotb.test()
-async def hwpe_stream_split(dut):
+async def hwpe_stream_merge(dut):
 
     #-----------------------------------
-    # Local parameters
-    # Don't touch these
+    # Modifiable parameters
     #-----------------------------------
-    STRB_WIDTH_IN  = int(DATA_WIDTH_IN / 8)  
-    MAX_DATA_VAL_I = 2**(DATA_WIDTH_IN)-1      
-    MAX_STRB_VAL_I = 2**(STRB_WIDTH_IN)-1
-    DATA_WIDTH_OUT = int(DATA_WIDTH_IN/NB_OUT_STREAMS)
-    STRB_WIDTH_OUT = int(DATA_WIDTH_OUT/8)
+    STRB_WIDTH    = int(DATA_WIDTH / 8)  # Don't touch this
+    MAX_DATA_VAL  = 2**DATA_WIDTH-1      # Don't touch this
+    MAX_STRB_VAL  = 2**STRB_WIDTH-1      # Don't touch this
 
-    # Check first DATA_WIDTH_IN is multiple of 8
-    assert ((DATA_WIDTH_IN % 8) == 0), f"{DATA_WIDTH_IN} is not a multiple of 8!"
+    # Check first DATA_WIDTH is multiple of 8
+    assert ((DATA_WIDTH % 8) == 0), f"{DATA_WIDTH} is not a multiple of 8!"
 
     #-----------------------------------
     # TB parameters:
-    # NB_OUT_STREAMS - indicates how many input streams
-    # DATA_WIDTH_IN    - indicates literal data width
+    # NB_IN_STREAMS - indicates how many input streams
+    # DATA_WIDTH    - indicates literal data width
     # TB drivers ports:
     # logic clk_i
     # logic rst_ni
     # logic clear_i
-    # hwpe_stream_intf_stream.sink push_i [NB_OUT_STREAMS-1:0],
+    # hwpe_stream_intf_stream.sink push_i [NB_IN_STREAMS-1:0],
     # >> input  valid_i
-    # >> input   data_i [DATA_WIDTH_IN-1:0]
-    # >> input   strb_i [STRB_WIDTH_IN-1:0]
+    # >> input   data_i [DATA_WIDTH-1:0]
+    # >> input   strb_i [STRB_WIDTH-1:0]
     # >> output ready_i
     # hwpe_stream_intf_stream.source pop_o
     # >> output valid_o
-    # >> output  data_o [DATA_WIDTH_OUT-1:0]
-    # >> output  strb_o [STRB_WIDTH_OUT-1:0]
+    # >> output  data_o [DATA_WIDTH-1:0]
+    # >> output  strb_o [STRB_WIDTH-1:0]
     # >> input  ready_o
     #-----------------------------------
 
@@ -145,13 +143,13 @@ async def hwpe_stream_split(dut):
     dut.clear_i.value = 0
 
     # Initialize push_i input values
-    dut.valid_i.value = 0
-    dut.data_i.value  = 0
-    dut.strb_i.value  = 0
+    for i in range(NB_IN_STREAMS):
+        dut.valid_i[i].value = 0
+        dut.data_i[i].value  = 0
+        dut.strb_i[i].value  = 0
     
     # Initialize pop_o values
-    for i in range(NB_OUT_STREAMS):
-        dut.ready_o[i].value = 0
+    dut.ready_o.value = 0
 
     # Wait 2 cycles to reset
     await RisingEdge(dut.clk_i)
@@ -166,76 +164,80 @@ async def hwpe_stream_split(dut):
 
     cocotb.log.info(f'------------------------------------ START OF TESTING ------------------------------------')
     cocotb.log.info(f'Running parameters:')
-    cocotb.log.info(f'NB_OUT_STREAMS:{NB_OUT_STREAMS}')
-    cocotb.log.info(f'DATA_WIDTH_IN :{DATA_WIDTH_IN}')
-    cocotb.log.info(f'RANDOM_SEED   :{RANDOM_SEED}')
+    cocotb.log.info(f'NB_IN_STREAMS:{NB_IN_STREAMS}')
+    cocotb.log.info(f'DATA_WIDTH   :{DATA_WIDTH}')
+    cocotb.log.info(f'RANDOM_SEED  :{RANDOM_SEED}')
     cocotb.log.info(f'------------------------------------------------------------------------------------------')
 
     for i in range(CHECK_COUNT):
-
-        cocotb.log.info(f'------------------------------------ ITERATION # {i} ------------------------------------')
 
         #-----------------------------------
         # Inputting stimuli
         #-----------------------------------
 
+        cocotb.log.info(f'------------------------------------ ITERATION # {i} ------------------------------------')
+
         # Initialize empty arrays
-        pop_data  = [0]*NB_OUT_STREAMS
-        pop_valid = [0]*NB_OUT_STREAMS
-        pop_strb  = [0]*NB_OUT_STREAMS
-        pop_ready = [0]*NB_OUT_STREAMS
+        push_data  = [0]*NB_IN_STREAMS
+        push_valid = [0]*NB_IN_STREAMS
+        push_strb  = [0]*NB_IN_STREAMS
+        push_ready = [0]*NB_IN_STREAMS
 
-        # Set stimuli values to drive DUT
-        push_data  = random.randint(0,MAX_DATA_VAL_I)
-        push_valid = random.randint(0,1)
-        push_strb  = random.randint(0,MAX_STRB_VAL_I)
-        
-        # Load stimuli values to push in
-        dut. data_i.value = push_data
-        dut.valid_i.value = push_valid
-        dut. strb_i.value = push_strb
+        for j in range(NB_IN_STREAMS-1,-1,-1):
 
-        for j in range(NB_OUT_STREAMS):
-            pop_ready[j]         = random.randint(0,1)
-            dut.ready_o[j].value = pop_ready[j]
+            # Get random data
+            push_data [j] = random.randint(0,MAX_DATA_VAL)
+            push_valid[j] = random.randint(0,1)
+            push_strb [j] = random.randint(0,MAX_STRB_VAL)
+            
+            # Push into the stimulus
+            dut. data_i[j].value  = push_data [j]
+            dut.valid_i[j].value  = push_valid[j]
+            dut. strb_i[j].value  = push_strb [j]
 
-        # Propagate data
+        # Not part of streams since this is a single value only
+        pop_ready  = random.randint(0,1)
+        dut.ready_o.value  = pop_ready
+
+        # Next time step for simulation to evaluate data
         await Timer(1, units="ns")
 
         #-----------------------------------
         # Extracting outputs
         #-----------------------------------
-        for j in range(NB_OUT_STREAMS):
 
-            pop_data [j] = dut. data_o[j].value
-            pop_valid[j] = dut.valid_o[j].value 
-            pop_strb [j] = dut. strb_o[j].value 
-            pop_ready[j] = dut.ready_o[j].value
+        pop_valid = dut.valid_o.value
+        pop_data  = int(dut.data_o.value)
+        pop_strb  = int(dut.strb_o.value)
 
-        # Push ready direction is an output to the input side
-        push_ready = dut.ready_i.value
-
+        for j in range(NB_IN_STREAMS):
+            push_ready[j] = dut.ready_i[j].value
+            cocotb.log.info(f'push_i[{j}].ready.value = {push_ready[j]}')
 
         #-----------------------------------
         # Logging data
         #-----------------------------------
-        cocotb.log.info(f'===== INPUT LOG =====')
+        for j in range(NB_IN_STREAMS-1,-1,-1):
 
-        cocotb.log.info(f'----- INPUT STREAM -----')
-        cocotb.log.info(f'push_i.data.value  = { hex(push_data)}')
-        cocotb.log.info(f'push_i.valid.value = {     push_valid}')
-        cocotb.log.info(f'push_i.strb.value  = { bin(push_strb)}')
-        cocotb.log.info(f'push_i.ready.value = {bin(push_ready)}')
+            # Stimuli setting for NB_IN_STREAMS inputs
+            cocotb.log.info(f'===== INPUT LOG =====')
 
+            # Record log
+            cocotb.log.info(f'----- INPUT STREAM # {j} -----')
+            cocotb.log.info(f'push_i[{j}].data.value  = {hex(push_data[j])}')
+            cocotb.log.info(f'push_i[{j}].valid.value = {   push_valid[j] }')
+            cocotb.log.info(f'push_i[{j}].strb.value  = {bin(push_strb[j])}')
+            
+        
+        cocotb.log.info(f'----- OUTPUT READY -----')
+        cocotb.log.info(f'pop_o.ready.value     = {pop_ready}')
+        
+        # Extract outputs
         cocotb.log.info(f'===== OUTPUT LOG =====')
 
-        for j in range(NB_OUT_STREAMS):
-
-            cocotb.log.info(f'----- OUTPUT STREAM # {j} -----')
-            cocotb.log.info(f'pop_o{NB_OUT_STREAMS-j}.data.value  = { hex(pop_data[j])}')
-            cocotb.log.info(f'pop_o{NB_OUT_STREAMS-j}.valid.value = {     pop_valid[j]}')
-            cocotb.log.info(f'pop_o{NB_OUT_STREAMS-j}.strb.value  = { bin(pop_strb[j])}')
-            cocotb.log.info(f'pop_o{NB_OUT_STREAMS-j}.ready.value = {bin(pop_ready[j])}')
+        cocotb.log.info(f'pop_o.valid.value     = {pop_valid}')
+        cocotb.log.info(f'pop_o.data.value      = {hex(pop_data)}')
+        cocotb.log.info(f'pop_o.strb.value      = {bin(pop_strb)}')
 
         #-----------------------------------
         # Assertion checks
@@ -247,28 +249,30 @@ async def hwpe_stream_split(dut):
         data_check  = 0
         strb_check  = 0
         valid_check = 0
-        ready_check = 0
+        ready_flag  = 1
 
-        for j in range(NB_OUT_STREAMS-1,-1,-1):
+        for j in range(NB_IN_STREAMS-1,-1,-1):
 
-            data_check   = (data_check << DATA_WIDTH_OUT) + pop_data[j]
-            strb_check   = (strb_check << STRB_WIDTH_OUT) + pop_strb[j]
-            valid_check += pop_valid[j]
-            ready_check += pop_ready[j]
+            data_check   = (data_check << DATA_WIDTH) + push_data[j]
+            strb_check   = (strb_check << STRB_WIDTH) + push_strb[j]
+            valid_check += push_valid[j]
 
-        # Check if data is correct
-        assert(data_check == push_data), f"ERROR! Output mismatch - Expected output: {hex(data_check)}; Actual output: {hex(push_data)}"
+            if(pop_ready != push_ready[j]):
+                ready_flag = 0
 
-        # Check if valid is correct
-        valid_expect = math.floor(valid_check/NB_OUT_STREAMS)
-        assert(valid_expect == push_valid), f"ERROR! Valid mismatch - Expected valid: {valid_expect}; Actual output: {push_valid}"
+        # Checking for data mismatch
+        assert(data_check == pop_data), f"ERROR! Output mismatch - Expected output: {hex(data_check)}; Actual output: {hex(pop_data)}"
 
-        # Check if strb is correct
-        assert(strb_check == push_strb), f"ERROR! Output mismatch - Expected output: {bin(strb_check)}; Actual output: {bin(push_strb)}"
+        # Checking for strb mismatch
+        assert(strb_check == pop_strb), f"ERROR! Output mismatch - Expected output: {bin(strb_check)}; Actual output: {bin(pop_strb)}"
 
-        # Check if ready is correct
-        ready_check = math.floor(ready_check/NB_OUT_STREAMS)
-        assert (push_ready == ready_check), f"ERROR! Ready mismatch - Double check ready values. Output ready input should be the same for input ready signals."
+        # Checking for valid mismatch
+        valid_expect = math.floor(valid_check/NB_IN_STREAMS)
+        assert(valid_expect == pop_valid), f"ERROR! Valid mismatch - Expected valid: {valid_expect}; Actual output: {pop_valid}"
+
+        # Checking for ready mismatch
+        assert (ready_flag == 1), f"ERROR! Ready mismatch - Double check ready values. Output ready input should be the same for input ready signals."
+
 
 #-----------------------------------
 # Pytest run
@@ -277,11 +281,11 @@ async def hwpe_stream_split(dut):
 # Parametrization
 @pytest.mark.parametrize(
 "parameters", [
-    {"DATA_WIDTH_IN": str(DATA_WIDTH_IN), "NB_OUT_STREAMS": str(NB_OUT_STREAMS)}
+    {"DATA_WIDTH": str(DATA_WIDTH), "NB_IN_STREAMS": str(NB_IN_STREAMS)}
 ])
 
 # Main test run
-def test_hwpe_stream_split(parameters):
+def test_hwpe_stream_merge(parameters):
 
     global rtl_sources
     global include_folders

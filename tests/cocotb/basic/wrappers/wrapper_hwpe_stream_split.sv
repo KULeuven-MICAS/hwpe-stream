@@ -5,7 +5,7 @@
 // Author: Ryan Antonio (ryan.antonio@esat.kuleuven.be)
 //---------------------------------
 
-module tb_hwpe_stream_split #(
+module wrapper_hwpe_stream_split #(
     //---------------------------------
     // Parameters
     //---------------------------------
